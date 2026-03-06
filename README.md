@@ -2,7 +2,7 @@
 
 [English](./README.md) / [简体中文](./README.zh-CN.md)
 
-RepoCheck is a local-first reproducibility auditor for Python and PyTorch research repositories. It answers four concrete questions:
+RepoCheck is a local-first reproducibility auditor for Python and PyTorch research repositories. We answers four concrete questions:
 
 - Is the information required to reproduce this repository actually present?
 - Do code, config, and docs agree with each other?
