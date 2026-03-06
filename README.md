@@ -1,4 +1,4 @@
-# RepoCheck
+﻿# RepoCheck
 
 [English](./README.md) / [简体中文](./README.zh-CN.md)
 
@@ -94,12 +94,16 @@ RepoCheck currently ships with an MVP rule set focused on the highest-value chec
 - `ENV002`: Python version is not declared
 - `CUDA001`: CUDA or cuDNN requirements are undocumented
 - `RUN001`: runnable entrypoint is missing or broken
+- `RUN002`: suggested minimal command is not actually runnable
 - `DOC001`: README lacks a minimal executable example
 - `DATA001`: hardcoded absolute data path detected
 - `DATA002`: data preparation or download steps are missing
+- `DATA003`: dataset version, integrity, or download verification details are incomplete
 - `SEED001`: reproducibility seed setup not found
 - `SEED002`: DataLoader or CUDA determinism setup is incomplete
 - `CFG001`: README, config, and code values conflict
+- `CFG002`: configuration precedence or resolved config export is incomplete
+- `EVAL001`: evaluation protocol is not reproducible
 - `ART001`: checkpoint source is undocumented
 
 ## Repository Layout

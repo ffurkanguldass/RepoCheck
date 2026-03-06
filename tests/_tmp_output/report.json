@@ -1,0 +1,1232 @@
+﻿{
+  "manifest": {
+    "source": "E:\\ai\\check\\tests\\fixtures\\sample_project",
+    "root_path": "E:\\ai\\check\\tests\\fixtures\\sample_project",
+    "language": "python",
+    "frameworks": [
+      "argparse"
+    ],
+    "config_system": "argparse",
+    "dependency_files": [
+      "requirements.txt"
+    ],
+    "config_files": [
+      "configs\\base.yaml"
+    ],
+    "shell_scripts": [
+      "scripts\\train.sh"
+    ],
+    "docs_files": [
+      "README.md"
+    ],
+    "python_files": [
+      "train.py"
+    ],
+    "notebook_files": [],
+    "ci_files": [],
+    "docker_files": [],
+    "entrypoints": [
+      "scripts/train.sh",
+      "train.py"
+    ],
+    "commands": [
+      {
+        "command": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+        "source": "README code block",
+        "kind": "train",
+        "score": 75,
+        "entrypoint": "train.py",
+        "exists": true,
+        "issues": [],
+        "evidence": [
+          {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+            "line_start": 7,
+            "line_end": 7,
+            "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+            "confidence": 1.0
+          }
+        ],
+        "params": {
+          "batch_size": 64,
+          "data_root": "./data",
+          "epochs": 1
+        }
+      },
+      {
+        "command": "bash scripts/train.sh",
+        "source": "README code block",
+        "kind": "train",
+        "score": 75,
+        "entrypoint": "scripts/train.sh",
+        "exists": true,
+        "issues": [],
+        "evidence": [
+          {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+            "line_start": 8,
+            "line_end": 8,
+            "snippet": "bash scripts/train.sh",
+            "confidence": 1.0
+          }
+        ],
+        "params": {}
+      },
+      {
+        "command": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+        "source": "script:train.sh",
+        "kind": "train",
+        "score": 45,
+        "entrypoint": "train.py",
+        "exists": true,
+        "issues": [
+          "Command includes an absolute path"
+        ],
+        "evidence": [
+          {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+            "line_start": 1,
+            "line_end": 1,
+            "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+            "confidence": 1.0
+          }
+        ],
+        "params": {
+          "batch_size": 128,
+          "data_root": "/mnt/private/data",
+          "dry_run": true
+        }
+      }
+    ],
+    "readme_path": "README.md",
+    "metadata": {
+      "readme_text": "# Sample Project\n\nTested with Python 3.11.\nDownload the dataset into ./data before running.\n\n```bash\npython train.py --batch-size 64 --data-root ./data --epochs 1\nbash scripts/train.sh\n```\n",
+      "docker_available": false,
+      "notebooks_present": false
+    }
+  },
+  "findings": [
+    {
+      "rule_id": "ENV001",
+      "severity": "high",
+      "title": "Dependency versions are not pinned",
+      "message": "At least one dependency file leaves package versions floating.",
+      "evidence": [
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\requirements.txt",
+          "line_start": 1,
+          "line_end": 1,
+          "snippet": "torch",
+          "confidence": 1.0
+        }
+      ],
+      "remediation": "Pin dependencies with exact versions in requirements.txt or pyproject.toml."
+    },
+    {
+      "rule_id": "DATA001",
+      "severity": "high",
+      "title": "Hardcoded absolute data path detected",
+      "message": "The code includes dataset or artifact paths tied to a local machine.",
+      "evidence": [
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 8,
+          "line_end": 8,
+          "snippet": "\"/mnt/private/data\"",
+          "confidence": 1.0
+        }
+      ],
+      "remediation": "Replace absolute paths with CLI flags or environment variables."
+    },
+    {
+      "rule_id": "SEED001",
+      "severity": "high",
+      "title": "No reproducibility seed found",
+      "message": "The code does not appear to set Python, NumPy, or Torch seeds.",
+      "evidence": [],
+      "remediation": "Set random, NumPy, and Torch seeds near the main entrypoint."
+    },
+    {
+      "rule_id": "CFG001",
+      "severity": "medium",
+      "title": "README, config, and code values disagree",
+      "message": "At least one parameter resolves to different values across docs, code, and config files.",
+      "evidence": [
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 7,
+          "line_end": 7,
+          "snippet": "parser.add_argument(\"--batch-size\", type=int, default=32)",
+          "confidence": 1.0
+        },
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 8,
+          "line_end": 8,
+          "snippet": "parser.add_argument(\"--data-root\", default=\"/mnt/private/data\")",
+          "confidence": 1.0
+        },
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 10,
+          "line_end": 10,
+          "snippet": "parser.add_argument(\"--epochs\", type=int, default=5)",
+          "confidence": 1.0
+        },
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 11,
+          "line_end": 11,
+          "snippet": "parser.add_argument(\"--dry-run\", action=\"store_true\")",
+          "confidence": 1.0
+        }
+      ],
+      "remediation": "Document the winning value and reduce duplicate configuration layers."
+    },
+    {
+      "rule_id": "DATA003",
+      "severity": "medium",
+      "title": "Dataset version and integrity details are incomplete",
+      "message": "The repository does not fully define dataset provenance and integrity: missing dataset version, split definition, checksum, download URL, auto-download script.",
+      "evidence": [],
+      "remediation": "Document dataset version, split, checksum, download URL, and add script-level hash verification with a clear failure message."
+    },
+    {
+      "rule_id": "CFG002",
+      "severity": "medium",
+      "title": "Configuration is not a single source of truth",
+      "message": "Parameters are defined in multiple layers, but override precedence documentation and resolved config export is not clearly established.",
+      "evidence": [
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 7,
+          "line_end": 7,
+          "snippet": "parser.add_argument(\"--batch-size\", type=int, default=32)",
+          "confidence": 1.0
+        },
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 8,
+          "line_end": 8,
+          "snippet": "parser.add_argument(\"--data-root\", default=\"/mnt/private/data\")",
+          "confidence": 1.0
+        },
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 9,
+          "line_end": 9,
+          "snippet": "parser.add_argument(\"--seed\", type=int, default=7)",
+          "confidence": 1.0
+        }
+      ],
+      "remediation": "Document precedence between README, scripts, and config files, and save the effective resolved config for every run."
+    },
+    {
+      "rule_id": "EVAL001",
+      "severity": "medium",
+      "title": "Evaluation protocol is not reproducible",
+      "message": "The repository does not fully specify the evaluation protocol: missing evaluation command or metric script, validation or test split, threshold or decision rule, post-processing description.",
+      "evidence": [
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+          "line_start": 1,
+          "line_end": 1,
+          "snippet": "# Sample Project",
+          "confidence": 1.0
+        }
+      ],
+      "remediation": "Provide a reproducible evaluation command, metric script, split definition, threshold or decision rule, post-processing settings, and repeat count or sampling procedure."
+    }
+  ],
+  "score": 23,
+  "risk_summary": {
+    "high": 3,
+    "medium": 4,
+    "low": 0
+  },
+  "generated_at": "2026-03-06T09:58:49.431159+00:00",
+  "mode": "smoke",
+  "analysis": {
+    "unpinned": [
+      {
+        "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\requirements.txt",
+        "line_start": 1,
+        "line_end": 1,
+        "snippet": "torch",
+        "confidence": 1.0
+      }
+    ],
+    "python_declared": [
+      {
+        "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+        "line_start": 1,
+        "line_end": 1,
+        "snippet": "README mentions Python",
+        "confidence": 1.0
+      }
+    ],
+    "cuda_documented": [],
+    "cuda_required": [],
+    "seed": {
+      "python": [],
+      "numpy": [],
+      "torch": [],
+      "cuda": []
+    },
+    "absolute_paths": [
+      {
+        "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+        "line_start": 8,
+        "line_end": 8,
+        "snippet": "\"/mnt/private/data\"",
+        "confidence": 1.0
+      }
+    ],
+    "env_paths": [],
+    "relative_paths": [],
+    "checkpoint_loads": [],
+    "dataloader_calls": [],
+    "dataloader_worker_init": [],
+    "cudnn_deterministic": [],
+    "cudnn_benchmark": [],
+    "minimal_example": true,
+    "data_documented": true,
+    "weights_documented": false,
+    "records": [
+      {
+        "key": "batch_size",
+        "value": 32,
+        "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+        "source_type": "code",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 7,
+          "line_end": 7,
+          "snippet": "parser.add_argument(\"--batch-size\", type=int, default=32)",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "data_root",
+        "value": "/mnt/private/data",
+        "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+        "source_type": "code",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 8,
+          "line_end": 8,
+          "snippet": "parser.add_argument(\"--data-root\", default=\"/mnt/private/data\")",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "seed",
+        "value": 7,
+        "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+        "source_type": "code",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 9,
+          "line_end": 9,
+          "snippet": "parser.add_argument(\"--seed\", type=int, default=7)",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "epochs",
+        "value": 5,
+        "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+        "source_type": "code",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 10,
+          "line_end": 10,
+          "snippet": "parser.add_argument(\"--epochs\", type=int, default=5)",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "dry_run",
+        "value": null,
+        "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+        "source_type": "code",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "line_start": 11,
+          "line_end": 11,
+          "snippet": "parser.add_argument(\"--dry-run\", action=\"store_true\")",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "batch_size",
+        "value": 32,
+        "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+        "source_type": "config",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+          "line_start": 1,
+          "line_end": 1,
+          "snippet": "batch_size: 32",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "seed",
+        "value": 7,
+        "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+        "source_type": "config",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+          "line_start": 2,
+          "line_end": 2,
+          "snippet": "seed: 7",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "data_root",
+        "value": "/mnt/private/data",
+        "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+        "source_type": "config",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+          "line_start": 3,
+          "line_end": 3,
+          "snippet": "data_root: /mnt/private/data",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "epochs",
+        "value": 5,
+        "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+        "source_type": "config",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+          "line_start": 4,
+          "line_end": 4,
+          "snippet": "epochs: 5",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "batch_size",
+        "value": 64,
+        "source": "README code block",
+        "source_type": "command",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+          "line_start": 7,
+          "line_end": 7,
+          "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "data_root",
+        "value": "./data",
+        "source": "README code block",
+        "source_type": "command",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+          "line_start": 7,
+          "line_end": 7,
+          "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "epochs",
+        "value": 1,
+        "source": "README code block",
+        "source_type": "command",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+          "line_start": 7,
+          "line_end": 7,
+          "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "batch_size",
+        "value": 128,
+        "source": "script:train.sh",
+        "source_type": "command",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+          "line_start": 1,
+          "line_end": 1,
+          "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "data_root",
+        "value": "/mnt/private/data",
+        "source": "script:train.sh",
+        "source_type": "command",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+          "line_start": 1,
+          "line_end": 1,
+          "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+          "confidence": 1.0
+        }
+      },
+      {
+        "key": "dry_run",
+        "value": true,
+        "source": "script:train.sh",
+        "source_type": "command",
+        "evidence": {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+          "line_start": 1,
+          "line_end": 1,
+          "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+          "confidence": 1.0
+        }
+      }
+    ],
+    "conflicts": [
+      {
+        "key": "batch_size",
+        "items": [
+          {
+            "key": "batch_size",
+            "value": 32,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "source_type": "code",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+              "line_start": 7,
+              "line_end": 7,
+              "snippet": "parser.add_argument(\"--batch-size\", type=int, default=32)",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "batch_size",
+            "value": 32,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "source_type": "config",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+              "line_start": 1,
+              "line_end": 1,
+              "snippet": "batch_size: 32",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "batch_size",
+            "value": 64,
+            "source": "README code block",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+              "line_start": 7,
+              "line_end": 7,
+              "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "batch_size",
+            "value": 128,
+            "source": "script:train.sh",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+              "line_start": 1,
+              "line_end": 1,
+              "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+              "confidence": 1.0
+            }
+          }
+        ]
+      },
+      {
+        "key": "data_root",
+        "items": [
+          {
+            "key": "data_root",
+            "value": "/mnt/private/data",
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "source_type": "code",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+              "line_start": 8,
+              "line_end": 8,
+              "snippet": "parser.add_argument(\"--data-root\", default=\"/mnt/private/data\")",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "data_root",
+            "value": "/mnt/private/data",
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "source_type": "config",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+              "line_start": 3,
+              "line_end": 3,
+              "snippet": "data_root: /mnt/private/data",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "data_root",
+            "value": "./data",
+            "source": "README code block",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+              "line_start": 7,
+              "line_end": 7,
+              "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "data_root",
+            "value": "/mnt/private/data",
+            "source": "script:train.sh",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+              "line_start": 1,
+              "line_end": 1,
+              "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+              "confidence": 1.0
+            }
+          }
+        ]
+      },
+      {
+        "key": "epochs",
+        "items": [
+          {
+            "key": "epochs",
+            "value": 5,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "source_type": "code",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+              "line_start": 10,
+              "line_end": 10,
+              "snippet": "parser.add_argument(\"--epochs\", type=int, default=5)",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "epochs",
+            "value": 5,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "source_type": "config",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+              "line_start": 4,
+              "line_end": 4,
+              "snippet": "epochs: 5",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "epochs",
+            "value": 1,
+            "source": "README code block",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+              "line_start": 7,
+              "line_end": 7,
+              "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+              "confidence": 1.0
+            }
+          }
+        ]
+      },
+      {
+        "key": "dry_run",
+        "items": [
+          {
+            "key": "dry_run",
+            "value": null,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "source_type": "code",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+              "line_start": 11,
+              "line_end": 11,
+              "snippet": "parser.add_argument(\"--dry-run\", action=\"store_true\")",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "dry_run",
+            "value": true,
+            "source": "script:train.sh",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+              "line_start": 1,
+              "line_end": 1,
+              "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+              "confidence": 1.0
+            }
+          }
+        ]
+      }
+    ],
+    "best_command": {
+      "command": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+      "source": "README code block",
+      "kind": "train",
+      "score": 75,
+      "entrypoint": "train.py",
+      "exists": true,
+      "issues": [],
+      "evidence": [
+        {
+          "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+          "line_start": 7,
+          "line_end": 7,
+          "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+          "confidence": 1.0
+        }
+      ],
+      "params": {
+        "batch_size": 64,
+        "data_root": "./data",
+        "epochs": 1
+      }
+    },
+    "grouped_records": {
+      "batch_size": [
+        {
+          "key": "batch_size",
+          "value": 32,
+          "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "source_type": "code",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "line_start": 7,
+            "line_end": 7,
+            "snippet": "parser.add_argument(\"--batch-size\", type=int, default=32)",
+            "confidence": 1.0
+          }
+        },
+        {
+          "key": "batch_size",
+          "value": 32,
+          "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+          "source_type": "config",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "line_start": 1,
+            "line_end": 1,
+            "snippet": "batch_size: 32",
+            "confidence": 1.0
+          }
+        },
+        {
+          "key": "batch_size",
+          "value": 64,
+          "source": "README code block",
+          "source_type": "command",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+            "line_start": 7,
+            "line_end": 7,
+            "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+            "confidence": 1.0
+          }
+        },
+        {
+          "key": "batch_size",
+          "value": 128,
+          "source": "script:train.sh",
+          "source_type": "command",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+            "line_start": 1,
+            "line_end": 1,
+            "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+            "confidence": 1.0
+          }
+        }
+      ],
+      "data_root": [
+        {
+          "key": "data_root",
+          "value": "/mnt/private/data",
+          "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "source_type": "code",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "line_start": 8,
+            "line_end": 8,
+            "snippet": "parser.add_argument(\"--data-root\", default=\"/mnt/private/data\")",
+            "confidence": 1.0
+          }
+        },
+        {
+          "key": "data_root",
+          "value": "/mnt/private/data",
+          "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+          "source_type": "config",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "line_start": 3,
+            "line_end": 3,
+            "snippet": "data_root: /mnt/private/data",
+            "confidence": 1.0
+          }
+        },
+        {
+          "key": "data_root",
+          "value": "./data",
+          "source": "README code block",
+          "source_type": "command",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+            "line_start": 7,
+            "line_end": 7,
+            "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+            "confidence": 1.0
+          }
+        },
+        {
+          "key": "data_root",
+          "value": "/mnt/private/data",
+          "source": "script:train.sh",
+          "source_type": "command",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+            "line_start": 1,
+            "line_end": 1,
+            "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+            "confidence": 1.0
+          }
+        }
+      ],
+      "seed": [
+        {
+          "key": "seed",
+          "value": 7,
+          "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "source_type": "code",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "line_start": 9,
+            "line_end": 9,
+            "snippet": "parser.add_argument(\"--seed\", type=int, default=7)",
+            "confidence": 1.0
+          }
+        },
+        {
+          "key": "seed",
+          "value": 7,
+          "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+          "source_type": "config",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "line_start": 2,
+            "line_end": 2,
+            "snippet": "seed: 7",
+            "confidence": 1.0
+          }
+        }
+      ],
+      "epochs": [
+        {
+          "key": "epochs",
+          "value": 5,
+          "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "source_type": "code",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "line_start": 10,
+            "line_end": 10,
+            "snippet": "parser.add_argument(\"--epochs\", type=int, default=5)",
+            "confidence": 1.0
+          }
+        },
+        {
+          "key": "epochs",
+          "value": 5,
+          "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+          "source_type": "config",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "line_start": 4,
+            "line_end": 4,
+            "snippet": "epochs: 5",
+            "confidence": 1.0
+          }
+        },
+        {
+          "key": "epochs",
+          "value": 1,
+          "source": "README code block",
+          "source_type": "command",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+            "line_start": 7,
+            "line_end": 7,
+            "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+            "confidence": 1.0
+          }
+        }
+      ],
+      "dry_run": [
+        {
+          "key": "dry_run",
+          "value": null,
+          "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+          "source_type": "code",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "line_start": 11,
+            "line_end": 11,
+            "snippet": "parser.add_argument(\"--dry-run\", action=\"store_true\")",
+            "confidence": 1.0
+          }
+        },
+        {
+          "key": "dry_run",
+          "value": true,
+          "source": "script:train.sh",
+          "source_type": "command",
+          "evidence": {
+            "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+            "line_start": 1,
+            "line_end": 1,
+            "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+            "confidence": 1.0
+          }
+        }
+      ]
+    },
+    "config_keys": [
+      "batch_size",
+      "data_root",
+      "epochs",
+      "seed"
+    ],
+    "entrypoint_param_map": {
+      "train.py": {
+        "keys": [
+          "batch_size",
+          "data_root",
+          "dry_run",
+          "epochs",
+          "seed"
+        ],
+        "hydra": {}
+      }
+    },
+    "repeated_keys": [
+      {
+        "key": "batch_size",
+        "items": [
+          {
+            "key": "batch_size",
+            "value": 32,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "source_type": "code",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+              "line_start": 7,
+              "line_end": 7,
+              "snippet": "parser.add_argument(\"--batch-size\", type=int, default=32)",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "batch_size",
+            "value": 32,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "source_type": "config",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+              "line_start": 1,
+              "line_end": 1,
+              "snippet": "batch_size: 32",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "batch_size",
+            "value": 64,
+            "source": "README code block",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+              "line_start": 7,
+              "line_end": 7,
+              "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "batch_size",
+            "value": 128,
+            "source": "script:train.sh",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+              "line_start": 1,
+              "line_end": 1,
+              "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+              "confidence": 1.0
+            }
+          }
+        ]
+      },
+      {
+        "key": "data_root",
+        "items": [
+          {
+            "key": "data_root",
+            "value": "/mnt/private/data",
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "source_type": "code",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+              "line_start": 8,
+              "line_end": 8,
+              "snippet": "parser.add_argument(\"--data-root\", default=\"/mnt/private/data\")",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "data_root",
+            "value": "/mnt/private/data",
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "source_type": "config",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+              "line_start": 3,
+              "line_end": 3,
+              "snippet": "data_root: /mnt/private/data",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "data_root",
+            "value": "./data",
+            "source": "README code block",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+              "line_start": 7,
+              "line_end": 7,
+              "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "data_root",
+            "value": "/mnt/private/data",
+            "source": "script:train.sh",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+              "line_start": 1,
+              "line_end": 1,
+              "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+              "confidence": 1.0
+            }
+          }
+        ]
+      },
+      {
+        "key": "seed",
+        "items": [
+          {
+            "key": "seed",
+            "value": 7,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "source_type": "code",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+              "line_start": 9,
+              "line_end": 9,
+              "snippet": "parser.add_argument(\"--seed\", type=int, default=7)",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "seed",
+            "value": 7,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "source_type": "config",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+              "line_start": 2,
+              "line_end": 2,
+              "snippet": "seed: 7",
+              "confidence": 1.0
+            }
+          }
+        ]
+      },
+      {
+        "key": "epochs",
+        "items": [
+          {
+            "key": "epochs",
+            "value": 5,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "source_type": "code",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+              "line_start": 10,
+              "line_end": 10,
+              "snippet": "parser.add_argument(\"--epochs\", type=int, default=5)",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "epochs",
+            "value": 5,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+            "source_type": "config",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\configs\\base.yaml",
+              "line_start": 4,
+              "line_end": 4,
+              "snippet": "epochs: 5",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "epochs",
+            "value": 1,
+            "source": "README code block",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+              "line_start": 7,
+              "line_end": 7,
+              "snippet": "python train.py --batch-size 64 --data-root ./data --epochs 1",
+              "confidence": 1.0
+            }
+          }
+        ]
+      },
+      {
+        "key": "dry_run",
+        "items": [
+          {
+            "key": "dry_run",
+            "value": null,
+            "source": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+            "source_type": "code",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\train.py",
+              "line_start": 11,
+              "line_end": 11,
+              "snippet": "parser.add_argument(\"--dry-run\", action=\"store_true\")",
+              "confidence": 1.0
+            }
+          },
+          {
+            "key": "dry_run",
+            "value": true,
+            "source": "script:train.sh",
+            "source_type": "command",
+            "evidence": {
+              "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\scripts\\train.sh",
+              "line_start": 1,
+              "line_end": 1,
+              "snippet": "python train.py --batch-size 128 --data-root /mnt/private/data --dry-run",
+              "confidence": 1.0
+            }
+          }
+        ]
+      }
+    ],
+    "data_version": [],
+    "data_split": [],
+    "data_checksum": [],
+    "data_url": [],
+    "auto_download": [],
+    "checksum_validation": [],
+    "priority_docs": [],
+    "resolved_config": [],
+    "eval_threshold": [],
+    "eval_postprocess": [],
+    "eval_sampling": [
+      {
+        "file": "E:\\ai\\check\\tests\\fixtures\\sample_project\\README.md",
+        "line_start": 1,
+        "line_end": 1,
+        "snippet": "# Sample Project",
+        "confidence": 1.0
+      }
+    ],
+    "eval_commands": [],
+    "eval_scripts": [],
+    "recipe_validation": {
+      "entrypoint": "train.py",
+      "unknown_params": [],
+      "missing_inputs": [],
+      "evidence": []
+    }
+  },
+  "recipe": {
+    "command": "python train.py --batch-size 64 --data-root ./data --epochs 1 --seed 42",
+    "env_requirements": {
+      "frameworks": [
+        "argparse"
+      ],
+      "config_system": "argparse"
+    },
+    "config_files": [
+      "configs\\base.yaml"
+    ],
+    "expected_outputs": [
+      "./outputs",
+      "./checkpoints"
+    ],
+    "missing_inputs": [
+      "dataset files under ./data or an equivalent user-provided path"
+    ]
+  },
+  "smoke": {
+    "mode": "smoke",
+    "success": true,
+    "steps": [
+      {
+        "name": "create_venv",
+        "command": "E:\\ai\\check\\tests\\fixtures\\sample_project\\.repocheck\\runtime\\smoke",
+        "success": true,
+        "return_code": 0,
+        "stdout": "created",
+        "stderr": ""
+      },
+      {
+        "name": "help",
+        "command": "E:\\ai\\check\\tests\\fixtures\\sample_project\\.repocheck\\runtime\\smoke\\Scripts\\python.exe train.py --batch-size 64 --data-root ./data --epochs 1 --seed 42 --help",
+        "success": true,
+        "return_code": 0,
+        "stdout": "usage: train.py [-h] [--batch-size BATCH_SIZE] [--data-root DATA_ROOT]\n                [--seed SEED] [--epochs EPOCHS] [--dry-run]\n\noptions:\n  -h, --help            show this help message and exit\n  --batch-size BATCH_SIZE\n  --data-root DATA_ROOT\n  --seed SEED\n  --epochs EPOCHS\n  --dry-run\n",
+        "stderr": ""
+      },
+      {
+        "name": "dry_run",
+        "command": "E:\\ai\\check\\tests\\fixtures\\sample_project\\.repocheck\\runtime\\smoke\\Scripts\\python.exe train.py --batch-size 64 --data-root ./data --epochs 1 --seed 42 --dry-run",
+        "success": true,
+        "return_code": 0,
+        "stdout": "batch_size=64; data_root=./data; seed=42\n",
+        "stderr": ""
+      }
+    ],
+    "environment_path": "E:\\ai\\check\\tests\\fixtures\\sample_project\\.repocheck\\runtime\\smoke"
+  },
+  "cache_hit": false
+}

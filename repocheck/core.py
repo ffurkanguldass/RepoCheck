@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import ast
 import json
@@ -124,7 +124,7 @@ def now_iso():
 
 def read_text(path):
     try:
-        return Path(path).read_text(encoding='utf-8')
+        return Path(path).read_text(encoding='utf-8-sig')
     except UnicodeDecodeError:
         return Path(path).read_text(encoding='latin-1')
 
@@ -689,48 +689,265 @@ def collect_analysis(manifest, inspectors):
     }
 
 
-def evidence_list(*items):
-    out = []
-    for item in items:
-        if isinstance(item, list):
-            out.extend(item)
-        elif item is not None:
-            out.append(item)
-    return out
+def augment_analysis(manifest, analysis, inspectors):
+	grouped = {}
+	for record in analysis['records']:
+		grouped.setdefault(record['key'], []).append(record)
+	analysis['grouped_records'] = grouped
+	analysis['config_keys'] = sorted({record['key'] for record in analysis['records'] if record['source_type'] == 'config'})
 
+	entrypoint_param_map = {}
+	for inspector in inspectors:
+		rel = relative_path(inspector.path, manifest.root_path)
+		entrypoint_param_map[rel] = {
+			'keys': sorted(set(inspector.arg_defaults).union(inspector.click_defaults)),
+			'hydra': inspector.hydra,
+		}
+	analysis['entrypoint_param_map'] = entrypoint_param_map
+
+	repeated_keys = []
+	for key, items in grouped.items():
+		source_types = {item['source_type'] for item in items}
+		if len(source_types) >= 2:
+			repeated_keys.append({'key': key, 'items': items})
+	analysis['repeated_keys'] = repeated_keys
+
+	signals = {
+		'data_version': [],
+		'data_split': [],
+		'data_checksum': [],
+		'data_url': [],
+		'auto_download': [],
+		'checksum_validation': [],
+		'priority_docs': [],
+		'resolved_config': [],
+		'eval_threshold': [],
+		'eval_postprocess': [],
+		'eval_sampling': [],
+	}
+	seen = set()
+	paths = []
+	for rel in manifest.docs_files + manifest.shell_scripts + manifest.python_files:
+		if rel in seen:
+			continue
+		seen.add(rel)
+		path = Path(manifest.root_path) / rel
+		if path.exists():
+			paths.append(path)
+
+	url_pattern = re.compile(r'https?://\\S+')
+	version_pattern = re.compile(r'\\bv?\\d+(?:\\.\\d+){0,2}\\b')
+	for path in paths:
+		is_script_source = path.suffix.lower() in {'.py', '.sh', '.bash'}
+		for line_number, raw in enumerate(read_text(path).splitlines(), start=1):
+			stripped = raw.strip()
+			lowered = stripped.lower()
+			if not stripped:
+				continue
+			evidence = make_evidence(path, line_number, snippet=stripped)
+			if url_pattern.search(stripped):
+				signals['data_url'].append(evidence)
+			if ('dataset' in lowered or 'data' in lowered) and ('version' in lowered or 'release' in lowered or version_pattern.search(lowered)):
+				signals['data_version'].append(evidence)
+			if 'split' in lowered or ('train' in lowered and ('val' in lowered or 'test' in lowered)) or 'fold' in lowered:
+				signals['data_split'].append(evidence)
+			if any(token in lowered for token in ['sha256', 'sha-256', 'md5', 'checksum']):
+				signals['data_checksum'].append(evidence)
+			if is_script_source and any(token in lowered for token in ['wget ', 'curl ', 'gdown', 'download', 'requests.get', 'urlretrieve']):
+				signals['auto_download'].append(evidence)
+			if any(token in lowered for token in ['hashlib', 'sha256', 'md5', 'checksum failed', 'hash mismatch', 'verification failed', 'invalid checksum']):
+				signals['checksum_validation'].append(evidence)
+			if any(token in lowered for token in ['priority', 'precedence', 'override order', 'command line overrides', 'cli overrides', 'single source of truth']):
+				signals['priority_docs'].append(evidence)
+			if any(token in lowered for token in ['resolved config', 'effective config', 'save_config', 'dump_config', 'omegaconf.save', 'save resolved', 'dump resolved', 'config dump']):
+				signals['resolved_config'].append(evidence)
+			if any(token in lowered for token in ['threshold', 'topk', 'top-k', 'cutoff']):
+				signals['eval_threshold'].append(evidence)
+			if any(token in lowered for token in ['postprocess', 'post-process', 'post process', 'nms', 'decode']):
+				signals['eval_postprocess'].append(evidence)
+			if any(token in lowered for token in ['sampling', 'sample ', 'samples ', 'trials', 'repeat', 'repeats', 'monte carlo']):
+				signals['eval_sampling'].append(evidence)
+
+	analysis.update(signals)
+	analysis['eval_commands'] = [evidence for command in manifest.commands if command.kind == 'eval' for evidence in command.evidence]
+
+	eval_scripts = []
+	for rel in manifest.python_files + manifest.shell_scripts:
+		lowered = rel.lower()
+		if any(token in lowered for token in ['eval', 'metric', 'metrics', 'score', 'test']):
+			eval_scripts.append(make_evidence(Path(manifest.root_path) / rel, 1, snippet=rel))
+	analysis['eval_scripts'] = eval_scripts
+	return analysis
+
+def evidence_list(*items):
+	out = []
+	for item in items:
+		if isinstance(item, list):
+			out.extend(item)
+		elif item is not None:
+			out.append(item)
+	return out
 
 def build_findings(manifest, analysis):
-    findings = []
-    seed_total = sum(len(items) for items in analysis['seed'].values())
-    if analysis['unpinned']:
-        findings.append(Finding('ENV001', 'high', 'Dependency versions are not pinned', 'At least one dependency file leaves package versions floating.', analysis['unpinned'], 'Pin dependencies with exact versions in requirements.txt or pyproject.toml.'))
-    if not analysis['python_declared']:
-        findings.append(Finding('ENV002', 'high', 'Python version is not declared', 'The repository does not clearly declare the Python runtime version.', [], 'Declare Python in pyproject.toml, environment.yml, or README.'))
-    if analysis['cuda_required'] and not analysis['cuda_documented']:
-        findings.append(Finding('CUDA001', 'medium', 'CUDA or cuDNN version is undocumented', 'Code touches CUDA but the expected CUDA stack is not documented.', analysis['cuda_required'], 'Document tested CUDA and cuDNN versions in README or dependency files.'))
-    if not manifest.entrypoints:
-        findings.append(Finding('RUN001', 'high', 'No runnable entrypoint found', 'The audit could not identify a reliable training or evaluation entrypoint.', [], 'Expose a clear python script, shell entrypoint, or Make target in README.'))
-    elif analysis['best_command'] and not analysis['best_command'].exists:
-        findings.append(Finding('RUN001', 'high', 'Best command references a missing file', 'The highest scoring command points at a file that does not exist.', analysis['best_command'].evidence, 'Fix the README or script command so it references a real file.'))
-    if not analysis['minimal_example']:
-        findings.append(Finding('DOC001', 'medium', 'README lacks a minimal executable example', 'The documentation does not provide a trustworthy minimal command to run.', [], 'Add a shortest-path command for training or evaluation to README.'))
-    if analysis['absolute_paths']:
-        findings.append(Finding('DATA001', 'high', 'Hardcoded absolute data path detected', 'The code includes dataset or artifact paths tied to a local machine.', analysis['absolute_paths'], 'Replace absolute paths with CLI flags or environment variables.'))
-    if (analysis['absolute_paths'] or analysis['env_paths']) and not analysis['data_documented']:
-        findings.append(Finding('DATA002', 'medium', 'Data acquisition steps are undocumented', 'The repository references dataset locations but does not explain how to prepare them.', evidence_list(analysis['absolute_paths'], analysis['env_paths']), 'Document download and preprocessing steps in README.'))
-    if seed_total == 0:
-        findings.append(Finding('SEED001', 'high', 'No reproducibility seed found', 'The code does not appear to set Python, NumPy, or Torch seeds.', [], 'Set random, NumPy, and Torch seeds near the main entrypoint.'))
-    elif analysis['dataloader_calls'] and not analysis['dataloader_worker_init']:
-        findings.append(Finding('SEED002', 'medium', 'DataLoader worker seed is missing', 'The project uses DataLoader but does not set worker_init_fn or equivalent seeding.', analysis['dataloader_calls'], 'Seed DataLoader workers or provide a deterministic generator.'))
-    elif analysis['cuda_required'] and (not analysis['cudnn_deterministic'] or not analysis['cudnn_benchmark']):
-        findings.append(Finding('SEED002', 'medium', 'cuDNN determinism is incomplete', 'CUDA is used but deterministic and benchmark flags are not fully configured.', analysis['cuda_required'], 'Set cudnn.deterministic = True and cudnn.benchmark = False when determinism matters.'))
-    if analysis['conflicts']:
-        evidence = [item['items'][0]['evidence'] for item in analysis['conflicts']]
-        findings.append(Finding('CFG001', 'medium', 'README, config, and code values disagree', 'At least one parameter resolves to different values across docs, code, and config files.', evidence, 'Document the winning value and reduce duplicate configuration layers.'))
-    if analysis['checkpoint_loads'] and not analysis['weights_documented']:
-        findings.append(Finding('ART001', 'medium', 'Checkpoint source is undocumented', 'The code loads checkpoints but the repository does not explain where they come from.', analysis['checkpoint_loads'], 'Document checkpoint provenance or provide a download URL.'))
-    return findings
+	findings = []
+	seed_total = sum(len(items) for items in analysis['seed'].values())
+	if analysis['unpinned']:
+		findings.append(Finding('ENV001', 'high', 'Dependency versions are not pinned', 'At least one dependency file leaves package versions floating.', analysis['unpinned'], 'Pin dependencies with exact versions in requirements.txt or pyproject.toml.'))
+	if not analysis['python_declared']:
+		findings.append(Finding('ENV002', 'high', 'Python version is not declared', 'The repository does not clearly declare the Python runtime version.', [], 'Declare Python in pyproject.toml, environment.yml, or README.'))
+	if analysis['cuda_required'] and not analysis['cuda_documented']:
+		findings.append(Finding('CUDA001', 'medium', 'CUDA or cuDNN version is undocumented', 'Code touches CUDA but the expected CUDA stack is not documented.', analysis['cuda_required'], 'Document tested CUDA and cuDNN versions in README or dependency files.'))
+	if not manifest.entrypoints:
+		findings.append(Finding('RUN001', 'high', 'No runnable entrypoint found', 'The audit could not identify a reliable training or evaluation entrypoint.', [], 'Expose a clear python script, shell entrypoint, or Make target in README.'))
+	elif analysis['best_command'] and not analysis['best_command'].exists:
+		findings.append(Finding('RUN001', 'high', 'Best command references a missing file', 'The highest scoring command points at a file that does not exist.', analysis['best_command'].evidence, 'Fix the README or script command so it references a real file.'))
+	if not analysis['minimal_example']:
+		findings.append(Finding('DOC001', 'medium', 'README lacks a minimal executable example', 'The documentation does not provide a trustworthy minimal command to run.', [], 'Add a shortest-path command for training or evaluation to README.'))
+	if analysis['absolute_paths']:
+		findings.append(Finding('DATA001', 'high', 'Hardcoded absolute data path detected', 'The code includes dataset or artifact paths tied to a local machine.', analysis['absolute_paths'], 'Replace absolute paths with CLI flags or environment variables.'))
+	if (analysis['absolute_paths'] or analysis['env_paths']) and not analysis['data_documented']:
+		findings.append(Finding('DATA002', 'medium', 'Data acquisition steps are undocumented', 'The repository references dataset locations but does not explain how to prepare them.', evidence_list(analysis['absolute_paths'], analysis['env_paths']), 'Document download and preprocessing steps in README.'))
+	if seed_total == 0:
+		findings.append(Finding('SEED001', 'high', 'No reproducibility seed found', 'The code does not appear to set Python, NumPy, or Torch seeds.', [], 'Set random, NumPy, and Torch seeds near the main entrypoint.'))
+	elif analysis['dataloader_calls'] and not analysis['dataloader_worker_init']:
+		findings.append(Finding('SEED002', 'medium', 'DataLoader worker seed is missing', 'The project uses DataLoader but does not set worker_init_fn or equivalent seeding.', analysis['dataloader_calls'], 'Seed DataLoader workers or provide a deterministic generator.'))
+	elif analysis['cuda_required'] and (not analysis['cudnn_deterministic'] or not analysis['cudnn_benchmark']):
+		findings.append(Finding('SEED002', 'medium', 'cuDNN determinism is incomplete', 'CUDA is used but deterministic and benchmark flags are not fully configured.', analysis['cuda_required'], 'Set cudnn.deterministic = True and cudnn.benchmark = False when determinism matters.'))
+	if analysis['conflicts']:
+		evidence = [item['items'][0]['evidence'] for item in analysis['conflicts']]
+		findings.append(Finding('CFG001', 'medium', 'README, config, and code values disagree', 'At least one parameter resolves to different values across docs, code, and config files.', evidence, 'Document the winning value and reduce duplicate configuration layers.'))
+	if analysis['checkpoint_loads'] and not analysis['weights_documented']:
+		findings.append(Finding('ART001', 'medium', 'Checkpoint source is undocumented', 'The code loads checkpoints but the repository does not explain where they come from.', analysis['checkpoint_loads'], 'Document checkpoint provenance or provide a download URL.'))
+	return findings
 
+def has_safe_default(analysis, keys):
+	grouped = analysis.get('grouped_records', {})
+	for key in keys:
+		for item in grouped.get(key, []):
+			if item['source_type'] not in {'code', 'config'}:
+				continue
+			value = item['value']
+			if isinstance(value, str):
+				if value and not is_probable_absolute_path(value):
+					return True, item['evidence']
+			elif value not in {None, False, ''}:
+				return True, item['evidence']
+	return False, None
+
+def validate_recipe(manifest, analysis, recipe=None):
+	result = {'entrypoint': None, 'unknown_params': [], 'missing_inputs': [], 'evidence': []}
+	if not recipe:
+		return result
+
+	entrypoint = command_entrypoint(recipe.command)
+	if not entrypoint and manifest.entrypoints:
+		entrypoint = manifest.entrypoints[0]
+	result['entrypoint'] = entrypoint
+
+	recipe_params = extract_params(recipe.command)
+	entrypoint_info = analysis.get('entrypoint_param_map', {}).get(entrypoint, {})
+	supported_keys = set(entrypoint_info.get('keys', []))
+	hydra_meta = entrypoint_info.get('hydra') or {}
+	if hydra_meta:
+		supported_keys.update({'config_name', 'config_path'})
+	config_keys = set(analysis.get('config_keys', []))
+
+	unknown_params = []
+	for key in recipe_params:
+		if key in {'h', 'help', 'dry_run'}:
+			continue
+		if key in supported_keys or key in config_keys:
+			continue
+		if hydra_meta and key in {'config', 'config_name', 'config_path'}:
+			continue
+		unknown_params.append(key)
+	result['unknown_params'] = sorted(dict.fromkeys(unknown_params))
+
+	if analysis.get('best_command') and analysis['best_command'].command == recipe.command:
+		result['evidence'].extend(analysis['best_command'].evidence)
+
+	data_keys = ('data_root', 'data.root', 'data_dir', 'dataset_root', 'dataset_path')
+	weight_keys = ('checkpoint', 'checkpoint_path', 'weights', 'weights_path', 'pretrained', 'ckpt', 'model_path')
+	config_selection_keys = ('config', 'config_name', 'config_path')
+
+	needs_data_input = analysis['absolute_paths'] or analysis['env_paths'] or any(key in analysis.get('grouped_records', {}) for key in data_keys)
+	if needs_data_input and not any(key in recipe_params for key in data_keys):
+		ok, evidence = has_safe_default(analysis, data_keys)
+		if not ok:
+			result['missing_inputs'].append('data root')
+			if evidence:
+				result['evidence'].append(evidence)
+
+	if analysis['checkpoint_loads'] and not any(key in recipe_params for key in weight_keys):
+		ok, evidence = has_safe_default(analysis, weight_keys)
+		if not ok:
+			result['missing_inputs'].append('checkpoint or weights path')
+			if evidence:
+				result['evidence'].append(evidence)
+
+	needs_config = manifest.config_system in {'hydra', 'yaml'} and len(manifest.config_files) >= 2
+	if needs_config and not any(key in recipe_params for key in config_selection_keys):
+		ok, evidence = has_safe_default(analysis, config_selection_keys)
+		hydra_default = bool(hydra_meta.get('config_name'))
+		if not ok and not hydra_default:
+			result['missing_inputs'].append('config selection')
+			if evidence:
+				result['evidence'].append(evidence)
+
+	return result
+
+def extra_findings(manifest, analysis, recipe=None):
+	findings = []
+	recipe_validation = analysis.get('recipe_validation') or validate_recipe(manifest, analysis, recipe)
+
+	if recipe and (recipe_validation['unknown_params'] or recipe_validation['missing_inputs']):
+		details = []
+		if recipe_validation['unknown_params']:
+			details.append('unparsed parameters: ' + ', '.join(recipe_validation['unknown_params']))
+		if recipe_validation['missing_inputs']:
+			details.append('missing closed-over inputs: ' + ', '.join(recipe_validation['missing_inputs']))
+		findings.append(Finding('RUN002', 'high', 'Suggested minimal command is not actually runnable', 'The recommended minimal command is not self-contained: ' + '; '.join(details) + '.', recipe_validation['evidence'], 'Make the suggested command parser-valid and include required config, data, and checkpoint inputs or provide safe defaults.'))
+
+	data_missing = []
+	if not analysis['data_version']:
+		data_missing.append('dataset version')
+	if not analysis['data_split']:
+		data_missing.append('split definition')
+	if not analysis['data_checksum']:
+		data_missing.append('checksum')
+	if not analysis['data_url']:
+		data_missing.append('download URL')
+	if not analysis['auto_download']:
+		data_missing.append('auto-download script')
+	elif not analysis['checksum_validation']:
+		data_missing.append('checksum validation failure handling')
+	if data_missing:
+		findings.append(Finding('DATA003', 'medium', 'Dataset version and integrity details are incomplete', 'The repository does not fully define dataset provenance and integrity: missing ' + ', '.join(data_missing) + '.', evidence_list(analysis['data_version'], analysis['data_split'], analysis['data_checksum'], analysis['data_url'], analysis['auto_download'])[:5], 'Document dataset version, split, checksum, download URL, and add script-level hash verification with a clear failure message.'))
+
+	if analysis['repeated_keys'] and (not analysis['priority_docs'] or not analysis['resolved_config']):
+		missing = []
+		if not analysis['priority_docs']:
+			missing.append('override precedence documentation')
+		if not analysis['resolved_config']:
+			missing.append('resolved config export')
+		evidence = [item['items'][0]['evidence'] for item in analysis['repeated_keys'][:3]]
+		findings.append(Finding('CFG002', 'medium', 'Configuration is not a single source of truth', 'Parameters are defined in multiple layers, but ' + ' and '.join(missing) + ' is not clearly established.', evidence, 'Document precedence between README, scripts, and config files, and save the effective resolved config for every run.'))
+
+	eval_missing = []
+	if not analysis['eval_commands'] and not analysis['eval_scripts']:
+		eval_missing.append('evaluation command or metric script')
+	if not analysis['data_split']:
+		eval_missing.append('validation or test split')
+	if not analysis['eval_threshold']:
+		eval_missing.append('threshold or decision rule')
+	if not analysis['eval_postprocess']:
+		eval_missing.append('post-processing description')
+	if not analysis['eval_sampling']:
+		eval_missing.append('sampling or repeat count')
+	if eval_missing:
+		findings.append(Finding('EVAL001', 'medium', 'Evaluation protocol is not reproducible', 'The repository does not fully specify the evaluation protocol: missing ' + ', '.join(eval_missing) + '.', evidence_list(analysis['eval_commands'], analysis['eval_scripts'], analysis['data_split'], analysis['eval_threshold'], analysis['eval_postprocess'], analysis['eval_sampling'])[:5], 'Provide a reproducible evaluation command, metric script, split definition, threshold or decision rule, post-processing settings, and repeat count or sampling procedure.'))
+
+	return findings
 
 def build_recipe(manifest, analysis):
     command = None
@@ -832,13 +1049,13 @@ def report_payload(report):
 def write_json_report(report, path):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(report_payload(report), indent=2, ensure_ascii=False), encoding='utf-8')
+    path.write_text(json.dumps(report_payload(report), indent=2, ensure_ascii=False), encoding='utf-8-sig')
 
 
 def write_cache(report):
     cache_path = Path(report.manifest.root_path) / '.repocheck' / 'cache' / 'last_report.json'
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(json.dumps(report_payload(report), indent=2, ensure_ascii=False), encoding='utf-8')
+    cache_path.write_text(json.dumps(report_payload(report), indent=2, ensure_ascii=False), encoding='utf-8-sig')
 
 
 def write_html_report(report, path):
@@ -846,18 +1063,22 @@ def write_html_report(report, path):
     path.parent.mkdir(parents=True, exist_ok=True)
     body = html.escape(render_terminal(report))
     text = '__LT__html__GT____LT__meta charset="utf-8"__GT____LT__title__GT__RepoCheck Report__LT__/title__GT____LT__body__GT____LT__h1__GT__RepoCheck Report__LT__/h1__GT____LT__pre__GT__' + body + '__LT__/pre__GT____LT__/body__GT____LT__/html__GT__'
-    path.write_text(text.replace('__LT__', chr(60)).replace('__GT__', chr(62)), encoding='utf-8')
+    path.write_text(text.replace('__LT__', chr(60)).replace('__GT__', chr(62)), encoding='utf-8-sig')
 
 
 def audit_source(source, mode='fast', use_cache=True):
-    root, label, _temporary = resolve_source(source)
-    manifest = scan_repository(label, root)
-    inspectors = inspect_repository(manifest)
-    analysis = collect_analysis(manifest, inspectors)
-    findings = build_findings(manifest, analysis)
-    recipe = build_recipe(manifest, analysis)
-    smoke = run_smoke(manifest, recipe) if mode in {'smoke', 'full'} and recipe else None
-    score, summary = score_report(findings)
-    report = AuditReport(manifest=manifest, findings=findings, score=score, risk_summary=summary, generated_at=now_iso(), mode=mode, analysis=analysis, recipe=recipe, smoke=smoke, cache_hit=False)
-    write_cache(report)
-    return report
+	root, label, _temporary = resolve_source(source)
+	manifest = scan_repository(label, root)
+	inspectors = inspect_repository(manifest)
+	analysis = collect_analysis(manifest, inspectors)
+	analysis = augment_analysis(manifest, analysis, inspectors)
+	recipe = build_recipe(manifest, analysis)
+	analysis['recipe_validation'] = validate_recipe(manifest, analysis, recipe)
+	findings = build_findings(manifest, analysis)
+	findings.extend(extra_findings(manifest, analysis, recipe))
+	smoke = run_smoke(manifest, recipe) if mode in {'smoke', 'full'} and recipe else None
+	score, summary = score_report(findings)
+	report = AuditReport(manifest=manifest, findings=findings, score=score, risk_summary=summary, generated_at=now_iso(), mode=mode, analysis=analysis, recipe=recipe, smoke=smoke, cache_hit=False)
+	write_cache(report)
+	return report
+
