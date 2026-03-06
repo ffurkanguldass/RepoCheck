@@ -2,16 +2,13 @@
 
 [English](./README.md) / [简体中文](./README.zh-CN.md)
 
-RepoCheck is a local-first reproducibility auditor for Python and PyTorch research repositories.
-
-It does not train your model for you. It answers four concrete questions:
+RepoCheck is a local-first reproducibility auditor for Python and PyTorch research repositories. We answers four concrete questions:
 
 - Is the information required to reproduce this repository actually present?
 - Do code, config, and docs agree with each other?
 - Are there obvious reproducibility risks?
 - What is the fastest minimal command a new user should try first?
 
-The Python package and CLI command are named `repocheck`.
 
 ## Why RepoCheck
 
@@ -137,3 +134,7 @@ Run the packaged CLI locally:
 ```bash
 python -m repocheck check tests/fixtures/sample_project --report all
 ```
+
+## Contributing
+
+If there are any important judgment criteria that haven't been mentioned, PRs are welcome!
