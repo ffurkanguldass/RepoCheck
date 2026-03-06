@@ -2,16 +2,13 @@
 
 [English](./README.md) / [简体中文](./README.zh-CN.md)
 
-RepoCheck 是一个面向 Python 与 PyTorch 研究仓库的本地优先可复现性审计器。
-
-它不会替用户训练模型，而是回答四个非常具体的问题：
+RepoCheck 是一个面向 Python 与 PyTorch 研究仓库的本地优先可复现性审计器。仓库帮你回答四个非常具体的问题：
 
 - 复现所需的信息到底有没有交代完整？
 - 代码、配置和文档之间是否一致？
 - 是否存在明显的不可复现风险？
 - 新用户最应该先执行哪条最小验证命令？
 
-当前 Python 包名和 CLI 命令名为 `repocheck`。
 
 ## 为什么做 RepoCheck
 
@@ -137,3 +134,8 @@ python -m unittest discover -s tests -v
 ```bash
 python -m repocheck check tests/fixtures/sample_project --report all
 ```
+
+## 贡献
+
+如果有什么很重要的判定要素没有提及，欢迎PR！
+
