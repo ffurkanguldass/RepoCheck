@@ -1,17 +1,14 @@
-# RepoCheck
+﻿# RepoCheck
 
 [English](./README.md) / [简体中文](./README.zh-CN.md)
 
-RepoCheck is a local-first reproducibility auditor for Python and PyTorch research repositories.
-
-It does not train your model for you. It answers four concrete questions:
+RepoCheck is a local-first reproducibility auditor for Python and PyTorch research repositories. It answers four concrete questions:
 
 - Is the information required to reproduce this repository actually present?
 - Do code, config, and docs agree with each other?
 - Are there obvious reproducibility risks?
 - What is the fastest minimal command a new user should try first?
 
-The Python package and CLI command are named `repocheck`.
 
 ## Why RepoCheck
 
@@ -97,12 +94,16 @@ RepoCheck currently ships with an MVP rule set focused on the highest-value chec
 - `ENV002`: Python version is not declared
 - `CUDA001`: CUDA or cuDNN requirements are undocumented
 - `RUN001`: runnable entrypoint is missing or broken
+- `RUN002`: suggested minimal command is not actually runnable
 - `DOC001`: README lacks a minimal executable example
 - `DATA001`: hardcoded absolute data path detected
 - `DATA002`: data preparation or download steps are missing
+- `DATA003`: dataset version, integrity, or download verification details are incomplete
 - `SEED001`: reproducibility seed setup not found
 - `SEED002`: DataLoader or CUDA determinism setup is incomplete
 - `CFG001`: README, config, and code values conflict
+- `CFG002`: configuration precedence or resolved config export is incomplete
+- `EVAL001`: evaluation protocol is not reproducible
 - `ART001`: checkpoint source is undocumented
 
 ## Repository Layout
@@ -137,3 +138,7 @@ Run the packaged CLI locally:
 ```bash
 python -m repocheck check tests/fixtures/sample_project --report all
 ```
+
+## Contributing
+
+If there are any important judgment criteria that haven't been mentioned, PRs are welcome!

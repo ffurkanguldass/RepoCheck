@@ -1,0 +1,33 @@
+﻿<html><meta charset="utf-8"><title>RepoCheck Report</title><body><h1>RepoCheck Report</h1><pre>Reproducibility Score: 23/100
+Risk Summary: 3 high, 4 medium, 0 low
+Frameworks: argparse
+
+Suggested minimal command
+python train.py --batch-size 64 --data-root ./data --epochs 1 --seed 42
+Missing inputs: dataset files under ./data or an equivalent user-provided path
+
+Findings
+[HIGH] ENV001: Dependency versions are not pinned
+At least one dependency file leaves package versions floating.
+ Evidence: E:\ai\check\tests\fixtures\sample_project\requirements.txt:1 torch
+[HIGH] DATA001: Hardcoded absolute data path detected
+The code includes dataset or artifact paths tied to a local machine.
+ Evidence: E:\ai\check\tests\fixtures\sample_project\train.py:8 &quot;/mnt/private/data&quot;
+[HIGH] SEED001: No reproducibility seed found
+The code does not appear to set Python, NumPy, or Torch seeds.
+[MEDIUM] CFG001: README, config, and code values disagree
+At least one parameter resolves to different values across docs, code, and config files.
+ Evidence: E:\ai\check\tests\fixtures\sample_project\train.py:7 parser.add_argument(&quot;--batch-size&quot;, type=int, default=32)
+[MEDIUM] DATA003: Dataset version and integrity details are incomplete
+The repository does not fully define dataset provenance and integrity: missing dataset version, split definition, checksum, download URL, auto-download script.
+[MEDIUM] CFG002: Configuration is not a single source of truth
+Parameters are defined in multiple layers, but override precedence documentation and resolved config export is not clearly established.
+ Evidence: E:\ai\check\tests\fixtures\sample_project\train.py:7 parser.add_argument(&quot;--batch-size&quot;, type=int, default=32)
+[MEDIUM] EVAL001: Evaluation protocol is not reproducible
+The repository does not fully specify the evaluation protocol: missing evaluation command or metric script, validation or test split, threshold or decision rule, post-processing description.
+ Evidence: E:\ai\check\tests\fixtures\sample_project\README.md:1 # Sample Project
+
+Smoke mode: passed
+ create_venv: 0
+ help: 0
+ dry_run: 0</pre></body></html>

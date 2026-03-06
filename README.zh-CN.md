@@ -1,33 +1,29 @@
-# RepoCheck
+﻿# RepoCheck
 
 [English](./README.md) / [简体中文](./README.zh-CN.md)
 
-RepoCheck 是一个面向 Python 与 PyTorch 研究仓库的本地优先可复现性审计器。
+RepoCheck 是一个面向 Python 与 PyTorch 研究仓库的本地优先可复现性审计器。我们回答四个具体问题：
 
-它不会替用户训练模型，而是回答四个非常具体的问题：
+- 复现所需的信息是否真的交代完整
+- 代码、配置和文档是否互相一致
+- 仓库里是否存在明显的不可复现风险
+- 新用户最先应该尝试哪条最小命令
 
-- 复现所需的信息到底有没有交代完整？
-- 代码、配置和文档之间是否一致？
-- 是否存在明显的不可复现风险？
-- 新用户最应该先执行哪条最小验证命令？
+## 为什么需要 RepoCheck
 
-当前 Python 包名和 CLI 命令名为 `repocheck`。
+研究仓库的“不可复现”通常不是抽象问题，而是这些很实际的落点：
 
-## 为什么做 RepoCheck
+- 依赖没有锁定版本
+- Python 或 CUDA 版本没有说明
+- 真正的训练入口不清晰
+- README 命令和代码默认值发生漂移
+- 数据路径写死在私有机器上
+- seed 设置缺失或不完整
+- checkpoint 需要但来源没说明
 
-研究仓库的“不可复现”通常不是抽象问题，而是这些非常具体的落点：
+RepoCheck 会把这些问题整理成带证据、严重级别和最小复现建议的结构化审计报告。
 
-- 依赖没有锁版本
-- Python 或 CUDA 版本没写
-- 主入口不明确
-- README 命令和代码默认值漂移
-- 数据路径写死在私人机器上
-- seed 设置不完整
-- checkpoint 必须要有，但来源没说明
-
-RepoCheck 会把这些问题转成结构化审计结果，包含严重级别、证据链和建议的最小复现命令。
-
-## 能做什么
+## 它能做什么
 
 - 扫描本地目录、Git URL 或解压后的 zip 仓库
 - 从仓库结构和 Python AST 推断框架与配置风格
@@ -89,20 +85,22 @@ Findings
 [MEDIUM] CFG001: README, config, and code values disagree
 ```
 
-## 首批规则
-
-当前 MVP 版本优先覆盖高价值审计项：
+## 当前规则集
 
 - `ENV001`：依赖未锁定精确版本
 - `ENV002`：未声明 Python 版本
 - `CUDA001`：未说明 CUDA 或 cuDNN 要求
 - `RUN001`：缺少可执行入口或入口失效
+- `RUN002`：建议的最小命令并不真正可运行
 - `DOC001`：README 缺少最小可执行示例
 - `DATA001`：检测到硬编码绝对数据路径
 - `DATA002`：缺少数据下载或准备说明
+- `DATA003`：数据版本、完整性或下载校验信息不完整
 - `SEED001`：未发现随机种子设置
 - `SEED002`：DataLoader 或 CUDA 确定性设置不完整
 - `CFG001`：README、配置和代码参数不一致
+- `CFG002`：配置优先级说明或 resolved config 导出不完整
+- `EVAL001`：评测协议不可复现
 - `ART001`：checkpoint 来源未说明
 
 ## 仓库结构
@@ -120,9 +118,9 @@ tests/
 ## 当前范围
 
 - 先聚焦 Python 仓库
-- 对 PyTorch、argparse、Click、Hydra 风格项目做尽力支持
+- 对 PyTorch、argparse、Click 和 Hydra 风格项目做尽力支持
 - 默认优先静态分析，这是最快也最稳的入口
-- smoke 模式刻意保持轻量，重点验证 `--help` 与 `--dry-run` 的可达性
+- smoke 模式刻意保持轻量，重点验证 `--help` 和 `--dry-run` 的可达性
 
 ## 开发
 
@@ -137,3 +135,7 @@ python -m unittest discover -s tests -v
 ```bash
 python -m repocheck check tests/fixtures/sample_project --report all
 ```
+
+## 贡献
+
+如果有什么很重要的判定要素没有提及，欢迎PR！
