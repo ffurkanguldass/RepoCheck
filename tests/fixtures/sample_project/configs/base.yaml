@@ -1,0 +1,4 @@
+batch_size: 32
+seed: 7
+data_root: /mnt/private/data
+epochs: 5

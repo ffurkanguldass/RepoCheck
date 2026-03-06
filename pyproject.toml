@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "repocheck"
+version = "0.1.0"
+description = "A local-first reproducibility auditor for Python and PyTorch repositories."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+ { name = "Codex" }
+]
+keywords = ["reproducibility", "audit", "cli", "pytorch", "research"]
+
+[project.scripts]
+repocheck = "repocheck.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["repocheck*"]

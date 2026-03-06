@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.repocheck/
+build/
+dist/
+repocheck_report.json
+repocheck_report.html
